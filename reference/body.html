@@ -1,0 +1,98 @@
+<div id="wrap" lang="tr">
+  <div id="stage">
+    <canvas id="game" width="960" height="600" aria-label="Oyun: Canavar Kasabası'na açılan küçük bir delikten bakış"></canvas>
+    <div id="hud-hearts" class="hud" aria-label="Kalpler"></div>
+    <div id="hud-status" class="hud"></div>
+    <div id="hud-inv" class="hud" aria-label="Çanta"></div>
+    <div id="hud-animals" class="hud" aria-label="Fenerler"></div>
+    <div id="hud-keys" class="hud"></div>
+    <div id="toast" class="hud" aria-live="polite"></div>
+    <div id="dialog" hidden>
+      <canvas id="dlg-face" width="112" height="112" aria-hidden="true"></canvas>
+      <div id="dlg-speaker"></div>
+      <div id="dlg-text"></div>
+      <div id="dlg-choices"></div>
+      <div id="dlg-next">▶ Devam (Boşluk / dokun)</div>
+    </div>
+
+
+
+    <div id="mapov" class="overlay" hidden>
+      <div class="card mapcard">
+        <h2>Kasaba Haritası</h2>
+        <canvas id="map-canvas" width="720" height="500" aria-label="Kasabanın haritası"></canvas>
+        <p class="hand">⭐ Sen buradasın · ❓ Yardım bekleyen arkadaşlar · Kapatmak için M</p>
+      </div>
+    </div>
+
+    <div id="intro" class="overlay" hidden>
+      <div class="card intro-card">
+        <h2>Kahramanlarımız</h2>
+        <div class="heroes">
+          <div class="hero">
+            <canvas id="pt-nehir" width="150" height="190" aria-label="Yarasa kostümlü Nehir"></canvas>
+            <h3>NEHİR <small>yarasa 🦇</small></h3>
+            <p><b>📡 Ses dalgası:</b> Gizli şeyleri bulur.</p>
+            <p><b>🐭 Minik:</b> Dar deliklerden geçer.</p>
+            <p><b>🙃 Baş aşağı:</b> Tavandaki kirişe asılır.</p>
+          </div>
+          <div class="hero">
+            <canvas id="pt-bade" width="150" height="190" aria-label="Vampir kostümlü Bade"></canvas>
+            <h3>BADE <small>vampir 🧛</small></h3>
+            <p><b>🌙 Gece gözü:</b> Karanlıkta görür.</p>
+            <p><b>📏 Uzun boylu:</b> Yüksek yerlere uzanır.</p>
+            <p><b>💪 Güçlü:</b> Ağır şeyleri iter.</p>
+          </div>
+        </div>
+        <p class="together">İkisi birlikte: Bade, Nehir'i omzuna alabilir!</p>
+        <div class="keys">
+          <span><kbd>←</kbd><kbd>↑</kbd><kbd>↓</kbd><kbd>→</kbd> Yürü</span>
+          <span><kbd>Boşluk</kbd> İncele, konuş</span>
+          <span><kbd>Q</kbd> Nehir ↔ Bade</span>
+          <span><kbd>M</kbd> Harita</span>
+        </div>
+        <p class="hearts-tip">❤️ Kalplerin azalırsa üzülme: Meydandaki sıcak kakao ya da bir canavar arkadaşa yardım etmek kalplerini doldurur!</p>
+        <button id="btn-intro" class="big" type="button">BAŞLAYALIM! (Boşluk)</button>
+      </div>
+    </div>
+
+    <div id="title" class="overlay">
+      <div class="card">
+        <h1>Canavar Kasabası<small>Bir Cadılar Bayramı Macerası</small></h1>
+        <p class="lines" id="owner-line"></p>
+        <p class="lines">Cadılar Bayramı gecesi Korku Treni sizi gizli bir kasabaya götürüyor.<br>Ama kara bulutlar ayı saklamış, festival başlayamıyor!</p>
+        <button id="btn-start" class="big" type="button">OYUNA BAŞLA</button>
+        <p class="goal">Yedi canavar arkadaşa yardım et, yedi balkabağı feneri topla.<br>Vampir Bade ile Yarasa Nehir'in güçlerini birlikte kullan!</p>
+        <button id="btn-howto" class="small-btn" type="button">NASIL OYNANIR?</button>
+        <div id="howto" hidden>
+          <div class="help">
+            <span><kbd>←</kbd> <kbd>↑</kbd> <kbd>↓</kbd> <kbd>→</kbd> ya da <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd></span><span>yürü</span>
+            <span><kbd>Boşluk</kbd></span><span>incele, konuş, kullan</span>
+            <span><kbd>Q</kbd></span><span>Nehir ile Bade arasında geçiş yap</span>
+            <span><kbd>M</kbd></span><span>kasaba haritasına bak</span>
+            <span class="hand">Nehir 🦇</span><span class="hand">Ses dalgalarıyla gizli şeyleri bulur, dar deliklerden geçer, tavana baş aşağı asılır.</span>
+            <span class="hand">Bade 🧛</span><span class="hand">Karanlıkta görür, yüksek yerlere uzanır, ağır şeyleri iter.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="over" class="overlay" hidden>
+      <div class="card">
+        <h2>Eyvah!</h2>
+        <p class="tag">Ama macera burada bitmedi.</p>
+        <button id="btn-checkpoint" class="big" type="button">SON KONTROL NOKTASINDAN DEVAM ET</button>
+        <button id="btn-over-restart" class="big alt" type="button">BAŞTAN BAŞLA</button>
+      </div>
+    </div>
+
+    <div id="ending" class="overlay bottom" hidden>
+      <div class="card ending-lines" id="ending-card"></div>
+    </div>
+  </div>
+
+  <div id="util">
+    <button id="btn-restart" type="button">↺ BAŞTAN BAŞLA</button>
+    <button id="btn-sound" type="button">🔊 SES</button>
+  </div>
+</div>

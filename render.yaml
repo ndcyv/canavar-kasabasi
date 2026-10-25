@@ -1,0 +1,17 @@
+# One free web service for the online Canavar Kasabası. No paid resources.
+services:
+  - type: web
+    name: canavar-kasabasi
+    runtime: node
+    plan: free
+    region: frankfurt
+    buildCommand: node --test
+    startCommand: node server.mjs
+    healthCheckPath: /healthz
+    envVars:
+      - key: NODE_VERSION
+        value: 24
+      - key: HOST
+        value: 0.0.0.0
+      - key: SAVE_DIR
+        value: /tmp/canavar-saves

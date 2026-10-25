@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Canavar Kasabası – Nehir ve Bade</title>
+<style>
+/* Layout: a sheet of paper (the game) lying on a warm wooden desk, with chunky
+   paper-card buttons underneath. One deliberate look, the same in light and dark. */
+:root {
+  --desk: #2a2016;
+  --desk-grain: #33271b;
+  --paper: #f5e9cc;
+  --paper-edge: #b99a68;
+  --ink: #3a2a1b;
+  --ink-soft: #7a5f42;
+  --accent: #b5532f;
+  --accent-ink: #fff6e2;
+  --gold: #d6a23c;
+  --moon: #bfe3ff;
+  --pad-shadow: #8a6a40;
+  --font-story: Georgia, "Iowan Old Style", "Palatino Linotype", Palatino, "Times New Roman", serif;
+  --font-hand: "Segoe Print", "Bradley Hand", "Chalkboard SE", "Comic Sans MS", "Marker Felt", cursive;
+  --font-ui: "Trebuchet MS", "Gill Sans", "Segoe UI", system-ui, sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  background: var(--desk);
+  background-image: repeating-linear-gradient(92deg, var(--desk) 0 18px, var(--desk-grain) 18px 21px, var(--desk) 21px 47px);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  -webkit-tap-highlight-color: transparent;
+  padding-inline: 16px;
+  padding-block: 12px 18px;
+  display: flex;
+  justify-content: center;
+}
+#wrap { width: min(1200px, 100%, calc((100dvh - 80px) * 1.6)); min-width: 0; }
+@supports not (height: 100dvh) { #wrap { width: min(1200px, 100%, calc((100vh - 80px) * 1.6)); } }
+
+#stage {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  aspect-ratio: 16 / 10;
+  container-type: inline-size;
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, .55), 0 0 0 1px rgba(0, 0, 0, .3);
+  background: var(--paper);
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+}
+#game { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+
+/* ---------- HUD (written on the paper) ---------- */
+.hud { position: absolute; pointer-events: none; }
+#hud-hearts { top: 2.6%; left: 2.4%; font-size: clamp(16px, 3.3cqw, 34px); letter-spacing: .08em; line-height: 1; }
+#hud-hearts .lost { filter: grayscale(1); opacity: .35; }
+#hud-status {
+  top: 10.5%; left: 2.4%;
+  font: 600 clamp(10px, 1.5cqw, 15px)/1.2 var(--font-hand);
+  color: var(--ink);
+}
+#hud-status .bar { display: block; width: 8.5em; height: .45em; margin-top: .25em; border: 1px solid var(--ink-soft); border-radius: 99px; overflow: hidden; }
+#hud-status .bar i { display: block; height: 100%; background: var(--accent); }
+#hud-inv { top: 2.2%; right: 2.2%; display: flex; gap: .5em; font-size: clamp(9px, 1.35cqw, 14px); }
+.slot {
+  width: 5.6em; padding: .3em .2em .35em; text-align: center;
+  border: 1.5px dashed var(--paper-edge); border-radius: 8px; color: var(--ink-soft);
+  font-family: var(--font-hand); line-height: 1.15;
+}
+.slot b { display: block; font-size: 2em; line-height: 1.15; font-weight: normal; }
+.slot.got { border: 1.5px solid var(--accent); background: rgba(255, 250, 235, .7); color: var(--ink); animation: pop .5s ease-out; }
+.slot:not(.got) b { opacity: .35; }
+@keyframes pop { 0% { transform: scale(.6); } 60% { transform: scale(1.15); } 100% { transform: scale(1); } }
+
+#toast {
+  left: 50%; bottom: 3%; transform: translateX(-50%);
+  max-width: 76%; padding: .55em 1.1em;
+  background: #fffaf0; border: 1.5px solid var(--paper-edge); border-radius: 10px;
+  font: clamp(12px, 2cqw, 20px)/1.35 var(--font-story); color: var(--ink); text-align: center;
+  white-space: pre-line; opacity: 0; transition: opacity .3s;
+  box-shadow: 0 3px 0 rgba(120, 90, 50, .25);
+}
+#toast.show { opacity: 1; }
+
+/* ---------- Dialogue box ---------- */
+#dialog {
+  position: absolute; left: 50%; bottom: 2.4%; transform: translateX(-50%);
+  width: min(84%, 46em); padding: .7em 1.1em .6em;
+  background: #fffaf0; border: 2px solid var(--accent); border-radius: 12px;
+  box-shadow: 0 4px 0 var(--pad-shadow), 0 10px 26px rgba(0, 0, 0, .25);
+  font-size: clamp(12px, 2.1cqw, 21px); cursor: pointer;
+}
+#dialog[hidden] { display: none; }
+#dlg-speaker { font: 700 .72em/1 var(--font-ui); letter-spacing: .12em; text-transform: uppercase; color: var(--accent); margin-bottom: .35em; }
+#dlg-speaker:empty { display: none; }
+#dlg-text { font-family: var(--font-story); line-height: 1.35; color: var(--ink); white-space: pre-line; }
+#dlg-text.loud { font-size: 1.5em; font-weight: 700; letter-spacing: .04em; }
+#dlg-choices { display: flex; flex-wrap: wrap; gap: .45em; margin-top: .55em; }
+#dlg-choices:empty { display: none; }
+.choice {
+  font: 600 .9em/1.2 var(--font-ui); color: var(--ink);
+  background: var(--paper); border: 1.5px solid var(--paper-edge); border-radius: 99px;
+  padding: .4em .95em; cursor: pointer;
+}
+.choice.sel, .choice:hover { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.choice:focus-visible, button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+#dlg-next { text-align: right; font: .7em/1 var(--font-ui); color: var(--ink-soft); margin-top: .3em; }
+#dlg-next[hidden] { display: none; }
+
+/* ---------- Overlays: title, game over, ending ---------- */
+.overlay {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  background: rgba(30, 20, 12, .45); padding: 3%;
+}
+.overlay[hidden] { display: none; }
+.card {
+  background: var(--paper); border: 2px solid var(--paper-edge); border-radius: 6px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, .45);
+  max-width: 82%; max-height: 100%; overflow: auto;
+  padding: 3.2cqw 4.5cqw; text-align: center; color: var(--ink);
+  font-size: clamp(11px, 1.9cqw, 19px);
+  transform: rotate(-.6deg);
+}
+.card h1, .card h2 { font-family: var(--font-story); margin: 0; line-height: 1.05; text-wrap: balance; color: var(--ink); }
+.card h1 { font-size: 2.7em; letter-spacing: .01em; }
+.card h1 small { display: block; font-size: .42em; font-style: italic; font-weight: normal; margin: .25em 0; color: var(--ink-soft); letter-spacing: .1em; }
+.card h2 { font-size: 2em; }
+.tag { font: italic 1.25em/1.3 var(--font-story); margin: .6em 0 1em; }
+.hand { font-family: var(--font-hand); color: var(--ink-soft); }
+.big {
+  font: 700 1.25em/1 var(--font-ui); color: var(--accent-ink); background: var(--accent);
+  border: 0; border-radius: 99px; padding: .7em 1.8em; cursor: pointer;
+  box-shadow: 0 5px 0 #6e2f17; margin: .3em .3em;
+}
+.big.alt { background: var(--paper); color: var(--ink); box-shadow: 0 5px 0 var(--pad-shadow); border: 1.5px solid var(--paper-edge); }
+.big:active { transform: translateY(3px); box-shadow: 0 2px 0 #6e2f17; }
+.help { margin-top: 1.1em; display: grid; grid-template-columns: auto auto; gap: .3em 1em; justify-content: center; text-align: left; font-size: .9em; }
+.help kbd {
+  font: 700 .85em/1 var(--font-ui); background: #fffaf0; border: 1px solid var(--paper-edge);
+  border-bottom-width: 3px; border-radius: 5px; padding: .15em .45em; white-space: nowrap;
+}
+.ending-lines p { font: 1.25em/1.35 var(--font-story); margin: .55em 0; animation: fadein .9s ease-out; }
+.ending-lines p.dong { font-size: 2.1em; font-weight: 700; letter-spacing: .1em; }
+.ending-lines h2 { animation: fadein .9s ease-out; }
+@keyframes fadein { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+/* ---------- Touch / click controls under the paper ---------- */
+#pad { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 14px; }
+.grp { display: flex; gap: 10px; }
+.pad {
+  width: clamp(54px, 8.5vw, 78px); aspect-ratio: 1; border-radius: 18px;
+  border: 1.5px solid var(--paper-edge); background: var(--paper); color: var(--ink);
+  font-size: clamp(20px, 3vw, 30px); line-height: 1; cursor: pointer;
+  box-shadow: 0 5px 0 var(--pad-shadow); touch-action: none; user-select: none; -webkit-user-select: none;
+}
+.pad.act { width: clamp(110px, 20vw, 190px); aspect-ratio: auto; height: clamp(54px, 8.5vw, 78px); display: flex; align-items: center; justify-content: center; gap: .35em; }
+.pad.act span { font: 700 clamp(13px, 1.7vw, 18px)/1 var(--font-ui); }
+.pad.on { transform: translateY(3px); box-shadow: 0 2px 0 var(--pad-shadow); background: #fff6dc; }
+#util { display: flex; justify-content: center; gap: 18px; margin-top: 12px; flex-wrap: wrap; }
+#util button {
+  background: none; border: 1px solid rgba(217, 199, 163, .35); color: #d9c7a3; border-radius: 99px;
+  padding: .4em 1em; font: 600 13px/1 var(--font-ui); cursor: pointer;
+}
+#util button:hover { color: #fff3d6; border-color: #d9c7a3; }
+@media (max-width: 520px) { .grp { gap: 6px; } #pad { gap: 6px; } }
+@media (prefers-reduced-motion: reduce) { .slot.got, .ending-lines p, .ending-lines h2 { animation: none; } }
+
+/* ---------- Museum additions ---------- */
+:root { --gold-ink: #8a6418; }
+#hud-inv { display: block; top: 2.2%; right: 2.2%; font: 600 clamp(9px, 1.35cqw, 14px)/1.25 var(--font-ui); color: var(--ink); text-align: left;
+  background: rgba(255, 250, 235, .55); border: 1.5px dashed var(--paper-edge); border-radius: 10px; padding: .45em .7em; min-width: 10.5em; }
+#hud-inv h3 { margin: 0 0 .25em; font: 700 1em/1 var(--font-ui); letter-spacing: .08em; color: var(--accent); }
+#hud-inv .it { display: flex; gap: .4em; align-items: center; white-space: nowrap; }
+#hud-inv .it.used { opacity: .4; text-decoration: line-through; }
+#hud-inv .empty { color: var(--ink-soft); font-style: italic; font-weight: normal; }
+#hud-inv .it.new { animation: pop .5s ease-out; }
+.pad span.lbl { display: block; font: 700 clamp(10px, 1.3vw, 13px)/1 var(--font-ui); margin-top: .25em; }
+.pad { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.pad.act { flex-direction: row; }
+.lines { font: italic 1.15em/1.45 var(--font-story); margin: .2em 0 .9em; }
+.goal { font: 1em/1.5 var(--font-story); margin: .9em 0 0; }
+#howto[hidden] { display: none; }
+#howto { margin-top: .8em; }
+.small-btn { font: 700 .95em/1 var(--font-ui); background: none; border: 1.5px solid var(--paper-edge); border-radius: 99px; padding: .45em 1em; color: var(--ink); cursor: pointer; margin-top: .6em; }
+.overlay.bottom { align-items: flex-end; background: transparent; padding-bottom: 2%; }
+.overlay.bottom .card { transform: none; max-width: 86%; padding: 1.4cqw 3cqw; }
+.ending-lines h2 { font-size: 2em; }
+.ending-lines p { margin: .3em 0; }
+.ending-lines p.son { font: 700 1.6em/1.2 var(--font-story); letter-spacing: .12em; }
+
+/* ---------- Zoo game additions ---------- */
+#hud-animals { top: 11%; left: 2.4%; display: flex; gap: .25em; font-size: clamp(12px, 2.1cqw, 22px); }
+#hud-animals span { opacity: .28; filter: grayscale(1); }
+#hud-animals span.got { opacity: 1; filter: none; animation: pop .5s ease-out; }
+#hud-status { top: 18%; font: 700 clamp(10px, 1.5cqw, 15px)/1.2 var(--font-ui); color: var(--accent); }
+.dpad { display: grid; grid-template-columns: repeat(3, auto); grid-template-rows: repeat(2, auto); gap: 6px; }
+.dpad [data-k=up] { grid-column: 2; grid-row: 1; }
+.dpad [data-k=left] { grid-column: 1; grid-row: 2; }
+.dpad [data-k=down] { grid-column: 2; grid-row: 2; }
+.dpad [data-k=right] { grid-column: 3; grid-row: 2; }
+.grp.vert { flex-direction: column; }
+.pad.swap span { font-size: clamp(11px, 1.4vw, 15px); }
+#mem-grid { display: grid; grid-template-columns: repeat(4, auto); gap: .5em; justify-content: center; margin: .6em 0; }
+.memcard { width: 3.6em; height: 4.4em; border-radius: 10px; border: 2px solid var(--paper-edge); background: var(--accent); color: var(--accent-ink); font-size: 1.3em; cursor: pointer; }
+.memcard.open, .memcard.done { background: #fffaf0; color: var(--ink); }
+.memcard.done { border-color: #6aa84f; }
+#secret-input { background: #fffaf0; color: var(--ink); font: 700 1.4em/1 var(--font-ui); padding: .35em .6em; border-radius: 10px; border: 2px solid var(--paper-edge); width: 10em; text-align: center; margin: .3em 0 .6em; text-transform: uppercase; }
+#mapov .card { transform: none; padding: 1.4cqw 2cqw; max-width: 94%; }
+#mapov h2 { font-size: 1.5em; margin-bottom: .3em; }
+#map-canvas { width: min(100%, 72cqw); height: auto; display: block; margin: 0 auto; border-radius: 6px; border: 1.5px solid var(--paper-edge); }
+#mapov .hand { margin: .4em 0 0; }
+#hud-keys { left: 2.4%; bottom: 3%; display: flex; flex-direction: column; gap: .35em; font: 600 clamp(9px, 1.35cqw, 14px)/1.2 var(--font-ui); color: var(--ink); }
+#hud-keys kbd, .intro-card kbd { font: 700 .95em/1 var(--font-ui); background: #fffaf0; border: 1px solid var(--paper-edge); border-bottom-width: 3px; border-radius: 5px; padding: .15em .45em; margin-right: .3em; }
+.intro-card { transform: none; padding: 1.6cqw 3cqw; max-width: 92%; font-size: clamp(10px, 1.7cqw, 17px); }
+.intro-card h2 { font-size: 1.8em; }
+.heroes { display: flex; gap: 2.5em; justify-content: center; margin: .5em 0 .2em; }
+.hero { width: 15em; }
+.hero canvas { width: 8em; height: auto; display: block; margin: 0 auto .3em; }
+.hero h3 { margin: 0 0 .3em; font: 700 1.3em/1 var(--font-story); }
+.hero h3 small { font: italic .7em var(--font-story); color: var(--ink-soft); }
+.hero p { margin: .25em 0; font: 1em/1.3 var(--font-story); }
+.together { font: italic 1.1em var(--font-story); margin: .4em 0; }
+.keys { display: flex; flex-wrap: wrap; gap: .6em 1.4em; justify-content: center; margin: .4em 0; }
+.hearts-tip { font: 1em/1.3 var(--font-story); margin: .5em 0 .6em; color: var(--accent); }
+.memcard.cur { outline: 4px solid var(--gold); outline-offset: 2px; transform: scale(1.06); }
+#hud-status { white-space: pre-line; line-height: 1.35; }
+
+/* ---------- Halloween additions ---------- */
+:root { --accent: #6a2a8a; --pad-shadow: #3a1f4a; }
+.big { box-shadow: 0 5px 0 #3a1240; }
+.big:active { box-shadow: 0 2px 0 #3a1240; }
+#hud-animals b { font: 700 .7em/1.6 var(--font-ui); color: var(--accent); margin-left: .3em; }
+#hud-animals span { opacity: .3; }
+.overlay { background: rgba(14, 8, 24, .55); }
+
+/* speaker portrait in the dialogue box */
+#dlg-face { float: left; width: 4.4em; height: 4.4em; margin: -.1em .8em .2em -.2em; border-radius: 50%; background: #ece3f6; border: 2px solid var(--accent); }
+#dlg-face[hidden] { display: none; }
+#dialog::after { content: ""; display: block; clear: both; }
+
+#connection { color: #f5e9cc; font: 600 14px/1.5 var(--font-ui); margin-bottom: 8px; min-height: 22px; }
+#lobby { z-index: 20; }
+#lobby label { display: block; margin: .7em 0; }
+#lobby input, #lobby select { font: inherit; padding: .5em; border-radius: 8px; background: #fffaf0; color: var(--ink); border: 1px solid var(--paper-edge); max-width: 100%; }
+#join-error { color: #a13225; }
+#intro { z-index: 15; }
+#wrap { width: min(1200px, 100%, calc((100dvh - 120px) * 1.6)); }
+#scene-note { color: #eacb91; font: 14px/1.5 var(--font-ui); text-align: center; min-height: 21px; margin-top: 8px; }
+</style>
+</head>
+<body>
+<div id="wrap" lang="tr">
+  <div id="connection" role="status" aria-live="polite">Bağlanıyor…</div>
+  <div id="stage">
+    <section id="lobby" class="overlay"><div class="card">
+      <h2>Canavar Kasabası · Birlikte</h2><p class="tag">Vampir Bade ile Yarasa Nehir aynı gecede!</p>
+      <p>Biriniz yeni oda kursun ve oda kodunu kuzenine söylesin.<br>Diğeriniz aynı kodu yazıp kendi kahramanını seçsin.</p>
+      <form id="join"><label>Kahramanın <select id="player-name"><option>Nehir</option><option>Bade</option></select></label>
+      <label>Oda kodu <input id="room-code" maxlength="8" autocomplete="off" placeholder="Yeni oda için boş bırak"></label>
+      <button class="big" type="submit">KATIL</button></form><p id="join-error" role="alert"></p>
+      <p class="hand">Oklar: yürü · Boşluk: incele, konuş · M: harita</p>
+    </div></section>
+    <canvas id="game" width="960" height="600" aria-label="Oyun: Canavar Kasabası'na açılan küçük bir delikten bakış"></canvas>
+    <div id="hud-hearts" class="hud" aria-label="Kalpler"></div>
+    <div id="hud-status" class="hud"></div>
+    <div id="hud-inv" class="hud" aria-label="Çanta"></div>
+    <div id="hud-animals" class="hud" aria-label="Fenerler"></div>
+    <div id="hud-keys" class="hud"></div>
+    <div id="toast" class="hud" aria-live="polite"></div>
+    <div id="dialog" hidden>
+      <canvas id="dlg-face" width="112" height="112" aria-hidden="true"></canvas>
+      <div id="dlg-speaker"></div>
+      <div id="dlg-text"></div>
+      <div id="dlg-choices"></div>
+      <div id="dlg-next">▶ Devam (Boşluk / dokun)</div>
+    </div>
+
+
+
+    <div id="mapov" class="overlay" hidden>
+      <div class="card mapcard">
+        <h2>Kasaba Haritası</h2>
+        <canvas id="map-canvas" width="720" height="500" aria-label="Kasabanın haritası"></canvas>
+        <p class="hand">⭐ Sen buradasın · ❓ Yardım bekleyen arkadaşlar · Kapatmak için M</p>
+      </div>
+    </div>
+
+    <div id="intro" class="overlay" hidden>
+      <div class="card intro-card">
+        <h2>Kahramanlarımız</h2>
+        <div class="heroes">
+          <div class="hero">
+            <canvas id="pt-nehir" width="150" height="190" aria-label="Yarasa kostümlü Nehir"></canvas>
+            <h3>NEHİR <small>yarasa 🦇</small></h3>
+            <p><b>📡 Ses dalgası:</b> Gizli şeyleri bulur.</p>
+            <p><b>🐭 Minik:</b> Dar deliklerden geçer.</p>
+            <p><b>🙃 Baş aşağı:</b> Tavandaki kirişe asılır.</p>
+          </div>
+          <div class="hero">
+            <canvas id="pt-bade" width="150" height="190" aria-label="Vampir kostümlü Bade"></canvas>
+            <h3>BADE <small>vampir 🧛</small></h3>
+            <p><b>🌙 Gece gözü:</b> Karanlıkta görür.</p>
+            <p><b>📏 Uzun boylu:</b> Yüksek yerlere uzanır.</p>
+            <p><b>💪 Güçlü:</b> Ağır şeyleri iter.</p>
+          </div>
+        </div>
+        <p class="together">İkisi birlikte: Bade, Nehir'i omzuna alabilir!</p>
+        <div class="keys">
+          <span><kbd>←</kbd><kbd>↑</kbd><kbd>↓</kbd><kbd>→</kbd> Yürü</span>
+          <span><kbd>Boşluk</kbd> İncele, konuş</span>
+          <span>📻 Uzaktaysanız telsizle konuşursunuz</span>
+          <span><kbd>M</kbd> Harita</span>
+        </div>
+        <p class="hearts-tip">❤️ Kalplerin azalırsa üzülme: Meydandaki sıcak kakao ya da bir canavar arkadaşa yardım etmek kalplerini doldurur!</p>
+        <p class="together">Her biriniz kendi kahramanını yönetir. Biri yükseğe uzanamazsa, karanlıkta göremezse ya da gizli bir şeyi bulamazsa, oyun kuzenine telsizle haber verir ve haritasında 📍 işareti çıkar. Trene, kuleye ve helikoptere birlikte binersiniz!</p>
+        <button id="btn-intro" class="big" type="button">BAŞLAYALIM! (Boşluk)</button>
+      </div>
+    </div>
+
+    <div id="title" class="overlay" hidden>
+      <div class="card">
+        <h1>Canavar Kasabası<small>Bir Cadılar Bayramı Macerası</small></h1>
+        <p class="lines" id="owner-line"></p>
+        <p class="lines">Cadılar Bayramı gecesi Korku Treni sizi gizli bir kasabaya götürüyor.<br>Ama kara bulutlar ayı saklamış, festival başlayamıyor!</p>
+        <button id="btn-start" class="big" type="button">OYUNA BAŞLA</button>
+        <p class="goal">Yedi canavar arkadaşa yardım et, yedi balkabağı feneri topla.<br>Vampir Bade ile Yarasa Nehir'in güçlerini birlikte kullan!</p>
+        <button id="btn-howto" class="small-btn" type="button">NASIL OYNANIR?</button>
+        <div id="howto" hidden>
+          <div class="help">
+            <span><kbd>←</kbd> <kbd>↑</kbd> <kbd>↓</kbd> <kbd>→</kbd> ya da <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd></span><span>yürü</span>
+            <span><kbd>Boşluk</kbd></span><span>incele, konuş, kullan</span>
+            <span><kbd>Q</kbd></span><span>Nehir ile Bade arasında geçiş yap</span>
+            <span><kbd>M</kbd></span><span>kasaba haritasına bak</span>
+            <span class="hand">Nehir 🦇</span><span class="hand">Ses dalgalarıyla gizli şeyleri bulur, dar deliklerden geçer, tavana baş aşağı asılır.</span>
+            <span class="hand">Bade 🧛</span><span class="hand">Karanlıkta görür, yüksek yerlere uzanır, ağır şeyleri iter.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="over" class="overlay" hidden>
+      <div class="card">
+        <h2>Eyvah!</h2>
+        <p class="tag">Ama macera burada bitmedi.</p>
+        <button id="btn-checkpoint" class="big" type="button">SON KONTROL NOKTASINDAN DEVAM ET</button>
+        <button id="btn-over-restart" class="big alt" type="button">BAŞTAN BAŞLA</button>
+      </div>
+    </div>
+
+    <div id="ending" class="overlay bottom" hidden>
+      <div class="card ending-lines" id="ending-card"></div>
+    </div>
+  </div>
+
+  <div id="scene-note" role="status"></div>
+  <div id="util">
+    <button id="btn-restart" type="button">↺ ORTAK OYUNU SIFIRLA</button>
+    <button id="btn-sound" type="button">🔊 SES</button>
+  </div>
+</div>
+<script src="/engine.js"></script><script type="module" src="/multiplayer.js"></script></body></html>
